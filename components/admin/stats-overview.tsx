@@ -17,115 +17,103 @@ export function StatsOverview() {
     {
       title: "Active Bookings",
       value: "47",
-      change: "+3",
+      change: "+8",
       changeType: "positive" as const,
       icon: Calendar,
-      description: "Pending & confirmed",
+      description: "Pending completion",
     },
     {
-      title: "Team Members",
-      value: "12",
-      change: "+2",
+      title: "Total Customers",
+      value: "1,234",
+      change: "+23",
       changeType: "positive" as const,
       icon: Users,
-      description: "Active cleaners",
+      description: "This month",
     },
     {
-      title: "Customer Rating",
-      value: "4.9",
-      change: "+0.1",
+      title: "Completion Rate",
+      value: "98.5%",
+      change: "+2.1%",
       changeType: "positive" as const,
-      icon: Star,
-      description: "Average rating",
+      icon: TrendingUp,
+      description: "Last 30 days",
     },
   ]
 
   const recentBookings = [
     {
       id: "BK001",
-      customer: "Sarah Johnson",
+      customer: "John Doe",
       service: "Deep Cleaning",
       date: "2024-01-20",
-      time: "10:00 AM",
-      status: "confirmed",
+      status: "completed" as const,
       amount: "₦45,000",
     },
     {
       id: "BK002",
-      customer: "Michael Chen",
+      customer: "Jane Smith",
       service: "Regular Cleaning",
-      date: "2024-01-20",
-      time: "2:00 PM",
-      status: "pending",
+      date: "2024-01-19",
+      status: "in-progress" as const,
       amount: "₦25,000",
     },
     {
       id: "BK003",
-      customer: "Emma Wilson",
-      service: "Move-in Cleaning",
-      date: "2024-01-21",
-      time: "9:00 AM",
-      status: "completed",
-      amount: "₦65,000",
+      customer: "Mike Johnson",
+      service: "Office Cleaning",
+      date: "2024-01-18",
+      status: "pending" as const,
+      amount: "₦75,000",
     },
     {
       id: "BK004",
-      customer: "David Brown",
-      service: "Office Cleaning",
-      date: "2024-01-21",
-      time: "11:00 AM",
-      status: "confirmed",
-      amount: "₦85,000",
+      customer: "Sarah Wilson",
+      service: "Post-Construction",
+      date: "2024-01-17",
+      status: "completed" as const,
+      amount: "₦120,000",
     },
   ]
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800"
-      case "confirmed":
-        return "bg-blue-100 text-blue-800"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-4 w-4" />
-      case "confirmed":
-        return <Clock className="h-4 w-4" />
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case "in-progress":
+        return <Clock className="h-4 w-4 text-blue-500" />
       case "pending":
-        return <AlertCircle className="h-4 w-4" />
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />
       default:
         return null
     }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      completed: "default",
+      "in-progress": "secondary",
+      pending: "outline",
+    } as const
+
+    return <Badge variant={variants[status as keyof typeof variants] || "outline"}>{status.replace("-", " ")}</Badge>
   }
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
+        {stats.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <Card key={stat.title}>
+            <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
                 <Icon className="h-4 w-4 text-gray-400" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="flex items-center space-x-2 text-xs text-gray-600">
-                  <span
-                    className={`flex items-center ${
-                      stat.changeType === "positive" ? "text-green-600" : "text-red-600"
-                    }`}
-                  >
-                    <TrendingUp className="h-3 w-3 mr-1" />
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <span className={`font-medium ${stat.changeType === "positive" ? "text-green-600" : "text-red-600"}`}>
                     {stat.change}
                   </span>
                   <span>{stat.description}</span>
@@ -136,7 +124,6 @@ export function StatsOverview() {
         })}
       </div>
 
-      {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Bookings */}
         <Card>
@@ -148,23 +135,16 @@ export function StatsOverview() {
             <div className="space-y-4">
               {recentBookings.map((booking) => (
                 <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium">{booking.customer}</span>
-                      <Badge variant="outline" className={getStatusColor(booking.status)}>
-                        <span className="flex items-center space-x-1">
-                          {getStatusIcon(booking.status)}
-                          <span className="capitalize">{booking.status}</span>
-                        </span>
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {booking.service} • {booking.date} at {booking.time}
+                  <div className="flex items-center space-x-3">
+                    {getStatusIcon(booking.status)}
+                    <div>
+                      <p className="font-medium text-sm">{booking.customer}</p>
+                      <p className="text-xs text-gray-500">{booking.service}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-medium">{booking.amount}</div>
-                    <div className="text-xs text-gray-500">{booking.id}</div>
+                    <p className="font-medium text-sm">{booking.amount}</p>
+                    <div className="flex items-center space-x-2">{getStatusBadge(booking.status)}</div>
                   </div>
                 </div>
               ))}
@@ -179,39 +159,25 @@ export function StatsOverview() {
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common tasks and shortcuts</CardDescription>
+            <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <Calendar className="h-5 w-5" />
-                <span className="text-sm">New Booking</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <Users className="h-5 w-5" />
-                <span className="text-sm">Add Team Member</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <DollarSign className="h-5 w-5" />
-                <span className="text-sm">Update Pricing</span>
-              </Button>
-              <Button
-                variant="outline"
-                className="h-20 flex flex-col items-center justify-center space-y-2 bg-transparent"
-              >
-                <TrendingUp className="h-5 w-5" />
-                <span className="text-sm">View Reports</span>
-              </Button>
-            </div>
+          <CardContent className="space-y-3">
+            <Button className="w-full justify-start bg-transparent" variant="outline">
+              <Calendar className="mr-2 h-4 w-4" />
+              Schedule New Booking
+            </Button>
+            <Button className="w-full justify-start bg-transparent" variant="outline">
+              <Users className="mr-2 h-4 w-4" />
+              Add Team Member
+            </Button>
+            <Button className="w-full justify-start bg-transparent" variant="outline">
+              <Star className="mr-2 h-4 w-4" />
+              Upload Gallery Images
+            </Button>
+            <Button className="w-full justify-start bg-transparent" variant="outline">
+              <TrendingUp className="mr-2 h-4 w-4" />
+              Generate Report
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -219,22 +185,22 @@ export function StatsOverview() {
       {/* Performance Metrics */}
       <Card>
         <CardHeader>
-          <CardTitle>This Month's Performance</CardTitle>
-          <CardDescription>Key metrics and achievements</CardDescription>
+          <CardTitle>Performance Overview</CardTitle>
+          <CardDescription>Key business metrics for this month</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">98%</div>
-              <div className="text-sm text-gray-600">Customer Satisfaction</div>
+              <div className="text-3xl font-bold text-green-600">98.5%</div>
+              <p className="text-sm text-gray-600">Customer Satisfaction</p>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">156</div>
-              <div className="text-sm text-gray-600">Jobs Completed</div>
+              <div className="text-3xl font-bold text-blue-600">4.8</div>
+              <p className="text-sm text-gray-600">Average Rating</p>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">4.2hrs</div>
-              <div className="text-sm text-gray-600">Avg. Job Duration</div>
+              <div className="text-3xl font-bold text-purple-600">156</div>
+              <p className="text-sm text-gray-600">Jobs Completed</p>
             </div>
           </div>
         </CardContent>
