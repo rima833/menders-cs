@@ -1,206 +1,209 @@
 "use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Calendar, DollarSign, Users, TrendingUp, Clock, CheckCircle, AlertCircle, Star } from "lucide-react"
+import { useAdmin } from "./admin-provider"
+import {
+  Calendar,
+  DollarSign,
+  Users,
+  Camera,
+  TrendingUp,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  BarChart3,
+} from "lucide-react"
 
 export function StatsOverview() {
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "₦2,450,000",
-      change: "+12.5%",
-      changeType: "positive" as const,
-      icon: DollarSign,
-      description: "This month",
-    },
-    {
-      title: "Active Bookings",
-      value: "47",
-      change: "+8",
-      changeType: "positive" as const,
-      icon: Calendar,
-      description: "Pending completion",
-    },
-    {
-      title: "Total Customers",
-      value: "1,234",
-      change: "+23",
-      changeType: "positive" as const,
-      icon: Users,
-      description: "This month",
-    },
-    {
-      title: "Completion Rate",
-      value: "98.5%",
-      change: "+2.1%",
-      changeType: "positive" as const,
-      icon: TrendingUp,
-      description: "Last 30 days",
-    },
-  ]
+  const { getStats, bookings, users, beforeAfterImages } = useAdmin()
+  const stats = getStats()
 
-  const recentBookings = [
-    {
-      id: "BK001",
-      customer: "John Doe",
-      service: "Deep Cleaning",
-      date: "2024-01-20",
-      status: "completed" as const,
-      amount: "₦45,000",
-    },
-    {
-      id: "BK002",
-      customer: "Jane Smith",
-      service: "Regular Cleaning",
-      date: "2024-01-19",
-      status: "in-progress" as const,
-      amount: "₦25,000",
-    },
-    {
-      id: "BK003",
-      customer: "Mike Johnson",
-      service: "Office Cleaning",
-      date: "2024-01-18",
-      status: "pending" as const,
-      amount: "₦75,000",
-    },
-    {
-      id: "BK004",
-      customer: "Sarah Wilson",
-      service: "Post-Construction",
-      date: "2024-01-17",
-      status: "completed" as const,
-      amount: "₦120,000",
-    },
-  ]
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "in-progress":
-        return <Clock className="h-4 w-4 text-blue-500" />
-      case "pending":
-        return <AlertCircle className="h-4 w-4 text-yellow-500" />
-      default:
-        return null
-    }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      completed: "default",
-      "in-progress": "secondary",
-      pending: "outline",
-    } as const
-
-    return <Badge variant={variants[status as keyof typeof variants] || "outline"}>{status.replace("-", " ")}</Badge>
-  }
+  const recentBookings = bookings.slice(0, 5)
+  const recentImages = beforeAfterImages.slice(0, 3)
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon
-          return (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{stat.title}</CardTitle>
-                <Icon className="h-4 w-4 text-gray-400" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="flex items-center space-x-2 text-xs text-gray-500">
-                  <span className={`font-medium ${stat.changeType === "positive" ? "text-green-600" : "text-red-600"}`}>
-                    {stat.change}
-                  </span>
-                  <span>{stat.description}</span>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+      {/* Welcome Header */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+        <h1 className="text-3xl font-bold mb-2">Welcome to Menders Admin Dashboard</h1>
+        <p className="text-blue-100">
+          Manage your cleaning business operations, track performance, and grow your revenue.
+        </p>
       </div>
 
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-green-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">₦{stats.totalRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">From {stats.completedBookings} completed jobs</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-blue-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
+            <TrendingUp className="h-4 w-4 text-blue-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">₦{stats.monthlyRevenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">This month's earnings</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Bookings</CardTitle>
+            <Clock className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.pendingBookings}</div>
+            <p className="text-xs text-muted-foreground">Awaiting confirmation</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-purple-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Team</CardTitle>
+            <Users className="h-4 w-4 text-purple-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{stats.activeUsers}</div>
+            <p className="text-xs text-muted-foreground">Team members</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Average Booking Value</CardTitle>
+            <BarChart3 className="h-4 w-4 text-gray-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₦{Math.round(stats.averageBookingValue).toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">Per completed job</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.totalBookings}</div>
+            <p className="text-xs text-muted-foreground">All time bookings</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Gallery Images</CardTitle>
+            <Camera className="h-4 w-4 text-gray-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.publishedImages}</div>
+            <p className="text-xs text-muted-foreground">Published photos</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Bookings */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Bookings</CardTitle>
             <CardDescription>Latest customer bookings and their status</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentBookings.map((booking) => (
-                <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    {getStatusIcon(booking.status)}
-                    <div>
-                      <p className="font-medium text-sm">{booking.customer}</p>
-                      <p className="text-xs text-gray-500">{booking.service}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-medium text-sm">{booking.amount}</p>
-                    <div className="flex items-center space-x-2">{getStatusBadge(booking.status)}</div>
-                  </div>
+          <CardContent className="space-y-4">
+            {recentBookings.map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{booking.customerName}</p>
+                  <p className="text-sm text-gray-600">{booking.service}</p>
+                  <p className="text-xs text-gray-500">
+                    {booking.date} at {booking.time}
+                  </p>
                 </div>
-              ))}
-            </div>
-            <Button variant="outline" className="w-full mt-4 bg-transparent">
-              View All Bookings
-            </Button>
+                <div className="text-right">
+                  <p className="font-medium">₦{booking.amount.toLocaleString()}</p>
+                  <Badge
+                    variant={
+                      booking.status === "completed"
+                        ? "default"
+                        : booking.status === "confirmed"
+                          ? "secondary"
+                          : booking.status === "pending"
+                            ? "outline"
+                            : "destructive"
+                    }
+                    className="text-xs"
+                  >
+                    {booking.status === "completed" && <CheckCircle className="w-3 h-3 mr-1" />}
+                    {booking.status === "pending" && <AlertCircle className="w-3 h-3 mr-1" />}
+                    {booking.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common administrative tasks</CardDescription>
+            <CardTitle>Recent Gallery Uploads</CardTitle>
+            <CardDescription>Latest before/after photos added to gallery</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start bg-transparent" variant="outline">
-              <Calendar className="mr-2 h-4 w-4" />
-              Schedule New Booking
-            </Button>
-            <Button className="w-full justify-start bg-transparent" variant="outline">
-              <Users className="mr-2 h-4 w-4" />
-              Add Team Member
-            </Button>
-            <Button className="w-full justify-start bg-transparent" variant="outline">
-              <Star className="mr-2 h-4 w-4" />
-              Upload Gallery Images
-            </Button>
-            <Button className="w-full justify-start bg-transparent" variant="outline">
-              <TrendingUp className="mr-2 h-4 w-4" />
-              Generate Report
-            </Button>
+          <CardContent className="space-y-4">
+            {recentImages.map((image) => (
+              <div key={image.id} className="flex items-center space-x-3 p-3 border rounded-lg">
+                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <Camera className="w-6 h-6 text-gray-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{image.title}</p>
+                  <p className="text-sm text-gray-600">{image.location}</p>
+                  <p className="text-xs text-gray-500">{image.serviceType}</p>
+                </div>
+                <Badge variant={image.isPublished ? "default" : "secondary"} className="text-xs">
+                  {image.isPublished ? "Published" : "Draft"}
+                </Badge>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
 
-      {/* Performance Metrics */}
+      {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Performance Overview</CardTitle>
-          <CardDescription>Key business metrics for this month</CardDescription>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Common administrative tasks</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-600">98.5%</div>
-              <p className="text-sm text-gray-600">Customer Satisfaction</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+              <Calendar className="w-8 h-8 mx-auto mb-2 text-blue-600" />
+              <p className="text-sm font-medium">New Booking</p>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">4.8</div>
-              <p className="text-sm text-gray-600">Average Rating</p>
+            <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+              <Users className="w-8 h-8 mx-auto mb-2 text-green-600" />
+              <p className="text-sm font-medium">Add Team Member</p>
             </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">156</div>
-              <p className="text-sm text-gray-600">Jobs Completed</p>
+            <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+              <Camera className="w-8 h-8 mx-auto mb-2 text-purple-600" />
+              <p className="text-sm font-medium">Upload Photos</p>
+            </div>
+            <div className="p-4 border rounded-lg text-center hover:bg-gray-50 cursor-pointer">
+              <DollarSign className="w-8 h-8 mx-auto mb-2 text-orange-600" />
+              <p className="text-sm font-medium">Update Pricing</p>
             </div>
           </div>
         </CardContent>
