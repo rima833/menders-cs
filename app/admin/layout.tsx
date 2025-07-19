@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard - Menders Cleaning Services",
-  description: "Professional cleaning services administration panel",
+  description: "Administrative dashboard for managing cleaning services",
 }
 
 export default function AdminLayout({
@@ -11,5 +11,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <div className="min-h-screen bg-gray-50">{children}</div>
+  return <div className="admin-layout">{children}</div>
 }

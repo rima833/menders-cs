@@ -3,264 +3,285 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Handshake } from "lucide-react"
-import { useForm } from "../form-provider"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
+import { Users, Building2, TrendingUp, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 interface PartnerModalProps {
   open: boolean
-  onClose: () => void
+  onOpenChange: (open: boolean) => void
 }
 
-export function PartnerModal({ open, onClose }: PartnerModalProps) {
-  const { addPartner } = useForm()
+export function PartnerModal({ open, onOpenChange }: PartnerModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
-    company: "",
     email: "",
     phone: "",
-    partnerType: "",
-    businessSize: "",
-    location: "",
-    website: "",
-    description: "",
-    expectedVolume: "",
-    currentChallenges: "",
+    city: "",
+    partnershipType: "",
+    experience: "",
+    investment: "",
+    businessPlan: "",
+    agreeToTerms: false,
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    // Add partner to the list
-    addPartner({
-      id: "",
-      name: formData.company,
-      type: formData.partnerType,
-      description: formData.description,
-    })
+      toast.success("Partnership application submitted successfully! We'll contact you within 24 hours.")
+      onOpenChange(false)
 
-    setIsSubmitting(false)
-    setSubmitted(true)
-
-    setTimeout(() => {
-      onClose()
-      setSubmitted(false)
+      // Reset form
       setFormData({
         name: "",
-        company: "",
         email: "",
         phone: "",
-        partnerType: "",
-        businessSize: "",
-        location: "",
-        website: "",
-        description: "",
-        expectedVolume: "",
-        currentChallenges: "",
+        city: "",
+        partnershipType: "",
+        experience: "",
+        investment: "",
+        businessPlan: "",
+        agreeToTerms: false,
       })
-    }, 2000)
+    } catch (error) {
+      toast.error("Failed to submit application. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  if (submitted) {
-    return (
-      <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <div className="text-center py-8">
-            <Handshake className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h3 className="text-2xl font-bold text-gray-900 mb-2">Partnership Request Sent! 🤝</h3>
-            <p className="text-gray-600 mb-4">
-              Thank you for your interest! Our partnership team will review your application and contact you within 48
-              hours.
-            </p>
-            <p className="text-sm text-gray-500">Welcome to the Menders family!</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">🤝 Become a Partner</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-2xl">
+            <Users className="h-6 w-6 text-blue-600" />
+            Partnership Application
+          </DialogTitle>
+          <DialogDescription>
+            Join Nigeria's fastest-growing cleaning service network. Fill out the form below to start your partnership
+            journey.
+          </DialogDescription>
         </DialogHeader>
 
+        {/* Partnership Types */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+          <div className="text-center p-4 border rounded-lg">
+            <Building2 className="h-8 w-8 text-blue-600 mx-auto mb-2" />
+            <h4 className="font-semibold">Franchise</h4>
+            <p className="text-sm text-muted-foreground">₦2M - ₦5M</p>
+          </div>
+          <div className="text-center p-4 border rounded-lg">
+            <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
+            <h4 className="font-semibold">Service Partner</h4>
+            <p className="text-sm text-muted-foreground">₦500K - ₦1M</p>
+          </div>
+          <div className="text-center p-4 border rounded-lg">
+            <TrendingUp className="h-8 w-8 text-orange-600 mx-auto mb-2" />
+            <h4 className="font-semibold">Referral Partner</h4>
+            <p className="text-sm text-muted-foreground">No Investment</p>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="name">Contact Person *</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="company">Company Name *</Label>
-              <Input
-                id="company"
-                value={formData.company}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone">Phone Number *</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="partnerType">Partner Type *</Label>
-              <Select
-                value={formData.partnerType}
-                onValueChange={(value) => setFormData({ ...formData, partnerType: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Property Manager">Property Manager</SelectItem>
-                  <SelectItem value="Event Planner">Event Planner</SelectItem>
-                  <SelectItem value="Real Estate Agent">Real Estate Agent</SelectItem>
-                  <SelectItem value="Construction Company">Construction Company</SelectItem>
-                  <SelectItem value="Facility Manager">Facility Manager</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="businessSize">Business Size</Label>
-              <Select
-                value={formData.businessSize}
-                onValueChange={(value) => setFormData({ ...formData, businessSize: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="startup">Startup (1-10 employees)</SelectItem>
-                  <SelectItem value="small">Small (11-50 employees)</SelectItem>
-                  <SelectItem value="medium">Medium (51-200 employees)</SelectItem>
-                  <SelectItem value="large">Large (200+ employees)</SelectItem>
-                </SelectContent>
-              </Select>
+          {/* Personal Information */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Personal Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
+                  placeholder="your.email@example.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange("phone", e.target.value)}
+                  placeholder="+234-800-123-4567"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City/Location *</Label>
+                <Select value={formData.city} onValueChange={(value) => handleInputChange("city", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lagos">Lagos</SelectItem>
+                    <SelectItem value="abuja">Abuja</SelectItem>
+                    <SelectItem value="port-harcourt">Port Harcourt</SelectItem>
+                    <SelectItem value="kano">Kano</SelectItem>
+                    <SelectItem value="ibadan">Ibadan</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="location">Primary Location</Label>
-              <Select
-                value={formData.location}
-                onValueChange={(value) => setFormData({ ...formData, location: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="abuja">Abuja</SelectItem>
-                  <SelectItem value="lagos">Lagos</SelectItem>
-                  <SelectItem value="both">Both Cities</SelectItem>
-                  <SelectItem value="other">Other (expanding soon)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="website">Website (Optional)</Label>
-              <Input
-                id="website"
-                value={formData.website}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                placeholder="https://yourwebsite.com"
-              />
+          {/* Partnership Details */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Partnership Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="partnershipType">Partnership Type *</Label>
+                <Select
+                  value={formData.partnershipType}
+                  onValueChange={(value) => handleInputChange("partnershipType", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select partnership type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="franchise">Franchise Partner</SelectItem>
+                    <SelectItem value="service">Service Partner</SelectItem>
+                    <SelectItem value="referral">Referral Partner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="experience">Business Experience</Label>
+                <Select value={formData.experience} onValueChange={(value) => handleInputChange("experience", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select your experience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No business experience</SelectItem>
+                    <SelectItem value="1-2">1-2 years</SelectItem>
+                    <SelectItem value="3-5">3-5 years</SelectItem>
+                    <SelectItem value="5+">5+ years</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="investment">Investment Capacity</Label>
+                <Select value={formData.investment} onValueChange={(value) => handleInputChange("investment", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select investment range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No investment (Referral only)</SelectItem>
+                    <SelectItem value="500k-1m">₦500K - ₦1M</SelectItem>
+                    <SelectItem value="1m-2m">₦1M - ₦2M</SelectItem>
+                    <SelectItem value="2m-5m">₦2M - ₦5M</SelectItem>
+                    <SelectItem value="5m+">₦5M+</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="description">Business Description *</Label>
+          {/* Business Plan */}
+          <div className="space-y-2">
+            <Label htmlFor="businessPlan">Why do you want to partner with Menders?</Label>
             <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Tell us about your business and what services you provide..."
-              required
+              id="businessPlan"
+              value={formData.businessPlan}
+              onChange={(e) => handleInputChange("businessPlan", e.target.value)}
+              placeholder="Tell us about your goals, experience, and why you're interested in partnering with Menders..."
+              rows={4}
             />
           </div>
 
-          <div>
-            <Label htmlFor="expectedVolume">Expected Cleaning Volume</Label>
-            <Select
-              value={formData.expectedVolume}
-              onValueChange={(value) => setFormData({ ...formData, expectedVolume: value })}
+          {/* Terms Agreement */}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="terms"
+              checked={formData.agreeToTerms}
+              onCheckedChange={(checked) => handleInputChange("agreeToTerms", checked as boolean)}
+            />
+            <Label htmlFor="terms" className="text-sm">
+              I agree to the{" "}
+              <a href="#" className="text-blue-600 hover:underline">
+                Terms and Conditions
+              </a>{" "}
+              and{" "}
+              <a href="#" className="text-blue-600 hover:underline">
+                Partnership Agreement
+              </a>
+              *
+            </Label>
+          </div>
+
+          {/* Benefits Reminder */}
+          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+            <h4 className="font-semibold mb-2">Partnership Benefits:</h4>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="w-2 h-2 p-0 rounded-full bg-green-500"></Badge>
+                <span>Comprehensive training</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="w-2 h-2 p-0 rounded-full bg-green-500"></Badge>
+                <span>Marketing support</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="w-2 h-2 p-0 rounded-full bg-green-500"></Badge>
+                <span>Ongoing assistance</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="w-2 h-2 p-0 rounded-full bg-green-500"></Badge>
+                <span>Proven business model</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex gap-4">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !formData.agreeToTerms}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select expected volume" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1-5">1-5 cleanings per month</SelectItem>
-                <SelectItem value="6-15">6-15 cleanings per month</SelectItem>
-                <SelectItem value="16-30">16-30 cleanings per month</SelectItem>
-                <SelectItem value="30+">30+ cleanings per month</SelectItem>
-                <SelectItem value="project-based">Project-based (varies)</SelectItem>
-              </SelectContent>
-            </Select>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Application"
+              )}
+            </Button>
           </div>
-
-          <div>
-            <Label htmlFor="currentChallenges">Current Cleaning Challenges</Label>
-            <Textarea
-              id="currentChallenges"
-              value={formData.currentChallenges}
-              onChange={(e) => setFormData({ ...formData, currentChallenges: e.target.value })}
-              placeholder="What cleaning challenges are you currently facing? How can we help solve them?"
-            />
-          </div>
-
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-blue-900 mb-2">Partnership Benefits:</h4>
-            <ul className="text-sm text-blue-800 space-y-1">
-              <li>• Exclusive partner rates and volume discounts</li>
-              <li>• Priority scheduling and dedicated account manager</li>
-              <li>• Flexible payment terms and bulk service packages</li>
-              <li>• Co-marketing opportunities and referral bonuses</li>
-            </ul>
-          </div>
-
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" size="lg" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting Application..." : "Submit Partnership Application 🤝"}
-          </Button>
         </form>
       </DialogContent>
     </Dialog>

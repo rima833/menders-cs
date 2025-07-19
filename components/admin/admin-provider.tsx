@@ -58,6 +58,12 @@ interface AdminContextType {
     monthlyRevenue: number
     averageBookingValue: number
   }
+
+  // User session management
+  user: User | null
+  setUser: (user: User | null) => void
+  isLoading: boolean
+  setIsLoading: (loading: boolean) => void
 }
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined)
@@ -76,11 +82,25 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [beforeAfterImages, setBeforeAfterImages] = useState<BeforeAfterImage[]>([])
   const [servicePrices, setServicePrices] = useState<ServicePrice[]>([])
   const [siteSettings, setSiteSettings] = useState<SiteSettings>({} as SiteSettings)
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Initialize database and load data
   useEffect(() => {
     db.initializeDatabase()
     refreshData()
+
+    // Check for stored session
+    const storedUser = localStorage.getItem("menders_admin_user")
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (error) {
+        console.error("Failed to parse stored user:", error)
+        localStorage.removeItem("menders_admin_user")
+      }
+    }
+    setIsLoading(false)
   }, [])
 
   const refreshData = () => {
@@ -278,6 +298,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     updateSiteSettings,
     refreshData,
     getStats,
+    user,
+    setUser: (newUser: User | null) => {
+      setUser(newUser)
+      if (newUser) {
+        localStorage.setItem("menders_admin_user", JSON.stringify(newUser))
+      } else {
+        localStorage.removeItem("menders_admin_user")
+      }
+    },
+    isLoading,
+    setIsLoading,
   }
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>
