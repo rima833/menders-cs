@@ -7,18 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Eye, EyeOff, Shield, LogOut } from "lucide-react"
-
-interface User {
-  id: string
-  email: string
-  name: string
-  role: "admin" | "manager" | "cleaner"
-  permissions: string[]
-}
+import { Eye, EyeOff, Shield, LogOut, User } from "lucide-react"
+import { db, type User as UserType } from "@/lib/database"
 
 interface AuthContextType {
-  user: User | null
+  user: UserType | null
   isAuthenticated: boolean
   login: (email: string, password: string) => Promise<boolean>
   logout: () => void
@@ -26,75 +19,57 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-// Real admin users with your details
-const adminUsers: User[] = [
-  {
-    id: "1",
-    email: "admin@menderscleaning.ng",
-    name: "Menders Admin",
-    role: "admin",
-    permissions: ["all"],
-  },
-  {
-    id: "2",
-    email: "manager@menderscleaning.ng",
-    name: "Sarah Johnson",
-    role: "manager",
-    permissions: ["bookings", "gallery", "users", "pricing"],
-  },
-  {
-    id: "3",
-    email: "cleaner@menderscleaning.ng",
-    name: "David Okafor",
-    role: "cleaner",
-    permissions: ["bookings"],
-  },
-]
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserType | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   useEffect(() => {
+    // Initialize database
+    db.initializeDatabase()
+
     // Check for stored auth on mount
-    const storedUser = localStorage.getItem("menders_admin_user")
+    const storedUser = localStorage.getItem("menders_admin_session")
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser)
-        setUser(userData)
-        setIsAuthenticated(true)
+        // Verify user still exists in database
+        const users = db.getUsers()
+        const currentUser = users.find((u) => u.id === userData.id)
+        if (currentUser) {
+          setUser(currentUser)
+          setIsAuthenticated(true)
+        } else {
+          localStorage.removeItem("menders_admin_session")
+        }
       } catch (error) {
-        localStorage.removeItem("menders_admin_user")
+        localStorage.removeItem("menders_admin_session")
       }
     }
   }, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Real authentication logic with your credentials
-    const validCredentials = [
-      { email: "admin@menderscleaning.ng", password: "MendersAdmin2024!" },
-      { email: "manager@menderscleaning.ng", password: "Manager123!" },
-      { email: "cleaner@menderscleaning.ng", password: "Cleaner123!" },
-    ]
+    try {
+      const authenticatedUser = db.authenticateUser(email, password)
 
-    const isValid = validCredentials.some((cred) => cred.email === email && cred.password === password)
-
-    if (isValid) {
-      const userData = adminUsers.find((u) => u.email === email)
-      if (userData) {
-        setUser(userData)
+      if (authenticatedUser) {
+        // Remove password from session data for security
+        const { password: _, ...userWithoutPassword } = authenticatedUser
+        setUser(userWithoutPassword as UserType)
         setIsAuthenticated(true)
-        localStorage.setItem("menders_admin_user", JSON.stringify(userData))
+        localStorage.setItem("menders_admin_session", JSON.stringify(userWithoutPassword))
         return true
       }
+      return false
+    } catch (error) {
+      console.error("Login error:", error)
+      return false
     }
-    return false
   }
 
   const logout = () => {
     setUser(null)
     setIsAuthenticated(false)
-    localStorage.removeItem("menders_admin_user")
+    localStorage.removeItem("menders_admin_session")
   }
 
   return <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>{children}</AuthContext.Provider>
@@ -124,29 +99,37 @@ export function LoginForm() {
     try {
       const success = await login(email, password)
       if (!success) {
-        setError("Invalid email or password. Please check your credentials.")
+        setError("Invalid email or password. Please check your credentials and try again.")
       }
     } catch (err) {
-      setError("Login failed. Please try again.")
+      setError("Login failed. Please try again later.")
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Quick login function for demo
+  const quickLogin = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail)
+    setPassword(demoPassword)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
-            <Shield className="h-8 w-8 text-white" />
+      <Card className="w-full max-w-md shadow-xl border-0">
+        <CardHeader className="text-center space-y-4 pb-8">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg">
+            <Shield className="h-10 w-10 text-white" />
           </div>
           <div>
             <CardTitle className="text-3xl font-bold text-gray-900">Menders Admin</CardTitle>
-            <CardDescription className="text-gray-600 mt-2">Professional Cleaning Services Dashboard</CardDescription>
+            <CardDescription className="text-gray-600 mt-2 text-base">
+              Professional Cleaning Services Dashboard
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                 Email Address
@@ -154,11 +137,11 @@ export function LoginForm() {
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@menderscleaning.ng"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-11"
+                className="h-12 text-base"
               />
             </div>
             <div className="space-y-2">
@@ -173,50 +156,98 @@ export function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="h-11 pr-10"
+                  className="h-12 pr-12 text-base"
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="absolute right-0 top-0 h-11 px-3 py-2 hover:bg-transparent"
+                  className="absolute right-0 top-0 h-12 px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </Button>
               </div>
             </div>
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="text-sm">{error}</AlertDescription>
               </Alert>
             )}
-            <Button type="submit" className="w-full h-11 bg-blue-600 hover:bg-blue-700" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-base font-medium"
+              disabled={isLoading}
+            >
               {isLoading ? "Signing in..." : "Sign In to Dashboard"}
             </Button>
           </form>
 
           <div className="border-t pt-6">
-            <div className="bg-gray-50 rounded-lg p-4">
+            <div className="bg-gray-50 rounded-lg p-4 space-y-4">
               <p className="text-sm font-medium text-gray-700 mb-3">Demo Access Credentials:</p>
-              <div className="space-y-2 text-xs text-gray-600">
-                <div className="flex justify-between">
-                  <span className="font-medium">Admin:</span>
-                  <span>admin@menderscleaning.ng</span>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-blue-600" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-700">Admin Access</p>
+                      <p className="text-xs text-gray-500">admin@menderscleaning.ng</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => quickLogin("admin@menderscleaning.ng", "MendersAdmin2024!")}
+                    className="text-xs"
+                  >
+                    Use
+                  </Button>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Password:</span>
-                  <span>MendersAdmin2024!</span>
+
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-green-600" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-700">Manager Access</p>
+                      <p className="text-xs text-gray-500">manager@menderscleaning.ng</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => quickLogin("manager@menderscleaning.ng", "Manager123!")}
+                    className="text-xs"
+                  >
+                    Use
+                  </Button>
                 </div>
-                <hr className="my-2" />
-                <div className="flex justify-between">
-                  <span className="font-medium">Manager:</span>
-                  <span>manager@menderscleaning.ng</span>
+
+                <div className="flex items-center justify-between p-2 bg-white rounded border">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-orange-600" />
+                    <div>
+                      <p className="text-xs font-medium text-gray-700">Cleaner Access</p>
+                      <p className="text-xs text-gray-500">cleaner@menderscleaning.ng</p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => quickLogin("cleaner@menderscleaning.ng", "Cleaner123!")}
+                    className="text-xs"
+                  >
+                    Use
+                  </Button>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Password:</span>
-                  <span>Manager123!</span>
-                </div>
+              </div>
+
+              <div className="text-xs text-gray-500 text-center pt-2 border-t">
+                <p>💡 Click "Use" to auto-fill credentials or enter your own</p>
               </div>
             </div>
           </div>
@@ -230,10 +261,10 @@ export function LogoutButton() {
   const { logout, user } = useAuth()
 
   return (
-    <Button variant="outline" size="sm" onClick={logout} className="flex items-center gap-2 bg-transparent">
+    <Button variant="outline" size="sm" onClick={logout} className="flex items-center gap-2 bg-white hover:bg-gray-50">
       <LogOut className="h-4 w-4" />
       <span className="hidden sm:inline">Logout</span>
-      <span className="text-xs text-gray-500">({user?.name})</span>
+      <span className="text-xs text-gray-500 hidden md:inline">({user?.name})</span>
     </Button>
   )
 }

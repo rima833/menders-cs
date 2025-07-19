@@ -3,7 +3,7 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   title: "Admin Dashboard - Menders Cleaning Services",
-  description: "Administrative dashboard for managing cleaning services",
+  description: "Professional cleaning services administration panel",
 }
 
 export default function AdminLayout({

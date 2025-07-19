@@ -1,62 +1,14 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
-
-interface User {
-  id: string
-  name: string
-  email: string
-  phone: string
-  role: "admin" | "manager" | "cleaner"
-  status: "active" | "inactive"
-  joinDate: string
-  lastLogin: string
-  avatar?: string
-}
-
-interface Booking {
-  id: string
-  customerName: string
-  email: string
-  phone: string
-  service: string
-  date: string
-  time: string
-  status: "pending" | "confirmed" | "in-progress" | "completed" | "cancelled"
-  amount: number
-  city: string
-  address: string
-  assignedTeam?: string
-  notes?: string
-  createdAt: string
-  updatedAt: string
-}
-
-interface BeforeAfterImage {
-  id: string
-  title: string
-  location: string
-  serviceType: string
-  beforeImage: string
-  afterImage: string
-  description: string
-  duration: string
-  client: string
-  rating: number
-  isPublished: boolean
-  uploadDate: string
-  tags: string[]
-}
-
-interface ServicePrice {
-  id: string
-  name: string
-  basePrice: number
-  description: string
-  category: "residential" | "commercial" | "specialized"
-  isActive: boolean
-  addOns: { name: string; price: number }[]
-}
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import {
+  db,
+  type User,
+  type Booking,
+  type BeforeAfterImage,
+  type ServicePrice,
+  type SiteSettings,
+} from "@/lib/database"
 
 interface AdminContextType {
   // Users
@@ -88,6 +40,13 @@ interface AdminContextType {
   deleteServicePrice: (id: string) => void
   calculatePrice: (serviceId: string, size: string, frequency: string, addOns: string[]) => number
 
+  // Site Settings
+  siteSettings: SiteSettings
+  updateSiteSettings: (settings: Partial<SiteSettings>) => void
+
+  // Refresh data
+  refreshData: () => void
+
   // Stats
   getStats: () => {
     totalBookings: number
@@ -112,231 +71,56 @@ export function useAdmin() {
 }
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      name: "Menders Admin",
-      email: "admin@menderscleaning.ng",
-      phone: "+234 803 123 4567",
-      role: "admin",
-      status: "active",
-      joinDate: "2024-01-01",
-      lastLogin: new Date().toISOString(),
-    },
-    {
-      id: "2",
-      name: "Sarah Johnson",
-      email: "sarah.manager@menderscleaning.ng",
-      phone: "+234 803 234 5678",
-      role: "manager",
-      status: "active",
-      joinDate: "2024-01-15",
-      lastLogin: "2024-01-19T10:30:00Z",
-    },
-    {
-      id: "3",
-      name: "David Okafor",
-      email: "david.cleaner@menderscleaning.ng",
-      phone: "+234 803 345 6789",
-      role: "cleaner",
-      status: "active",
-      joinDate: "2024-02-01",
-      lastLogin: "2024-01-19T14:20:00Z",
-    },
-    {
-      id: "4",
-      name: "Grace Adebayo",
-      email: "grace.cleaner@menderscleaning.ng",
-      phone: "+234 803 456 7890",
-      role: "cleaner",
-      status: "active",
-      joinDate: "2024-02-10",
-      lastLogin: "2024-01-19T09:15:00Z",
-    },
-  ])
+  const [users, setUsers] = useState<User[]>([])
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [beforeAfterImages, setBeforeAfterImages] = useState<BeforeAfterImage[]>([])
+  const [servicePrices, setServicePrices] = useState<ServicePrice[]>([])
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({} as SiteSettings)
 
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: "1",
-      customerName: "Mrs. Adebayo Funmi",
-      email: "funmi.adebayo@email.com",
-      phone: "+234 801 111 1111",
-      service: "Deep Cleaning",
-      date: "2024-01-25",
-      time: "10:00 AM",
-      status: "confirmed",
-      amount: 45000,
-      city: "Lagos",
-      address: "15 Admiralty Way, Lekki Phase 1, Lagos",
-      assignedTeam: "Team A (David & Grace)",
-      notes: "Customer prefers eco-friendly products",
-      createdAt: "2024-01-20T08:00:00Z",
-      updatedAt: "2024-01-21T10:30:00Z",
-    },
-    {
-      id: "2",
-      customerName: "Tunde Ogundimu",
-      email: "tunde.ogundimu@email.com",
-      phone: "+234 802 222 2222",
-      service: "Post-Construction Cleaning",
-      date: "2024-01-26",
-      time: "2:00 PM",
-      status: "pending",
-      amount: 120000,
-      city: "Lagos",
-      address: "Plot 456, Victoria Island, Lagos",
-      createdAt: "2024-01-22T14:00:00Z",
-      updatedAt: "2024-01-22T14:00:00Z",
-    },
-    {
-      id: "3",
-      customerName: "Kemi Adesola",
-      email: "kemi.adesola@email.com",
-      phone: "+234 803 333 3333",
-      service: "Office Cleaning",
-      date: "2024-01-24",
-      time: "6:00 PM",
-      status: "completed",
-      amount: 75000,
-      city: "Lagos",
-      address: "12th Floor, UBA Building, Marina, Lagos",
-      assignedTeam: "Team B",
-      notes: "Weekly recurring service",
-      createdAt: "2024-01-15T12:00:00Z",
-      updatedAt: "2024-01-24T18:30:00Z",
-    },
-  ])
+  // Initialize database and load data
+  useEffect(() => {
+    db.initializeDatabase()
+    refreshData()
+  }, [])
 
-  const [beforeAfterImages, setBeforeAfterImages] = useState<BeforeAfterImage[]>([
-    {
-      id: "1",
-      title: "Luxury Living Room Transformation",
-      location: "Lekki Phase 1, Lagos",
-      serviceType: "Deep Cleaning",
-      beforeImage: "/placeholder.svg?height=300&width=400&text=Before+Living+Room",
-      afterImage: "/placeholder.svg?height=300&width=400&text=After+Living+Room",
-      description:
-        "Complete transformation of a luxury family living room with deep carpet cleaning, furniture polishing, and window cleaning.",
-      duration: "4 hours",
-      client: "Mrs. Adebayo Funmi",
-      rating: 5,
-      isPublished: true,
-      uploadDate: "2024-01-15",
-      tags: ["living room", "deep cleaning", "luxury"],
-    },
-    {
-      id: "2",
-      title: "Office Space Deep Clean",
-      location: "Victoria Island, Lagos",
-      serviceType: "Office Cleaning",
-      beforeImage: "/placeholder.svg?height=300&width=400&text=Before+Office",
-      afterImage: "/placeholder.svg?height=300&width=400&text=After+Office",
-      description: "Professional office cleaning including workstations, conference rooms, and common areas.",
-      duration: "6 hours",
-      client: "Tech Solutions Ltd",
-      rating: 5,
-      isPublished: true,
-      uploadDate: "2024-01-18",
-      tags: ["office", "commercial", "workstation"],
-    },
-  ])
-
-  const [servicePrices, setServicePrices] = useState<ServicePrice[]>([
-    {
-      id: "1",
-      name: "Regular Home Cleaning",
-      basePrice: 25000,
-      description: "Standard cleaning for homes including dusting, vacuuming, mopping, and bathroom cleaning",
-      category: "residential",
-      isActive: true,
-      addOns: [
-        { name: "Window Cleaning", price: 5000 },
-        { name: "Carpet Deep Clean", price: 8000 },
-        { name: "Appliance Cleaning", price: 6000 },
-      ],
-    },
-    {
-      id: "2",
-      name: "Deep Home Cleaning",
-      basePrice: 45000,
-      description: "Comprehensive deep cleaning including all regular services plus detailed cleaning of all surfaces",
-      category: "residential",
-      isActive: true,
-      addOns: [
-        { name: "Window Cleaning", price: 5000 },
-        { name: "Carpet Deep Clean", price: 8000 },
-        { name: "Appliance Cleaning", price: 6000 },
-        { name: "Upholstery Cleaning", price: 12000 },
-      ],
-    },
-    {
-      id: "3",
-      name: "Office Cleaning",
-      basePrice: 75000,
-      description: "Professional office cleaning including workstations, meeting rooms, and common areas",
-      category: "commercial",
-      isActive: true,
-      addOns: [
-        { name: "Window Cleaning", price: 8000 },
-        { name: "Carpet Cleaning", price: 15000 },
-        { name: "Kitchen Deep Clean", price: 10000 },
-      ],
-    },
-    {
-      id: "4",
-      name: "Post-Construction Cleaning",
-      basePrice: 120000,
-      description: "Specialized cleaning for newly constructed or renovated spaces",
-      category: "specialized",
-      isActive: true,
-      addOns: [
-        { name: "Paint Splatter Removal", price: 20000 },
-        { name: "Debris Removal", price: 15000 },
-        { name: "Window Installation Clean", price: 10000 },
-      ],
-    },
-  ])
+  const refreshData = () => {
+    setUsers(db.getUsers())
+    setBookings(db.getBookings())
+    setBeforeAfterImages(db.getBeforeAfterImages())
+    setServicePrices(db.getServicePrices())
+    setSiteSettings(db.getSiteSettings())
+  }
 
   // User Management Functions
   const addUser = (user: Omit<User, "id" | "joinDate" | "lastLogin">) => {
-    const newUser: User = {
-      ...user,
-      id: Date.now().toString(),
-      joinDate: new Date().toISOString().split("T")[0],
-      lastLogin: new Date().toISOString(),
-    }
-    setUsers((prev) => [...prev, newUser])
+    db.addUser(user)
+    refreshData()
   }
 
   const updateUser = (id: string, updatedUser: Partial<User>) => {
-    setUsers((prev) => prev.map((user) => (user.id === id ? { ...user, ...updatedUser } : user)))
+    db.updateUser(id, updatedUser)
+    refreshData()
   }
 
   const deleteUser = (id: string) => {
-    setUsers((prev) => prev.filter((user) => user.id !== id))
+    db.deleteUser(id)
+    refreshData()
   }
 
   // Booking Management Functions
   const addBooking = (booking: Omit<Booking, "id" | "createdAt" | "updatedAt">) => {
-    const newBooking: Booking = {
-      ...booking,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }
-    setBookings((prev) => [...prev, newBooking])
+    db.addBooking(booking)
+    refreshData()
   }
 
   const updateBooking = (id: string, updatedBooking: Partial<Booking>) => {
-    setBookings((prev) =>
-      prev.map((booking) =>
-        booking.id === id ? { ...booking, ...updatedBooking, updatedAt: new Date().toISOString() } : booking,
-      ),
-    )
+    db.updateBooking(id, updatedBooking)
+    refreshData()
   }
 
   const deleteBooking = (id: string) => {
-    setBookings((prev) => prev.filter((booking) => booking.id !== id))
+    db.deleteBooking(id)
+    refreshData()
   }
 
   const updateBookingStatus = (id: string, status: Booking["status"]) => {
@@ -353,43 +137,41 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   // Image Management Functions
   const addBeforeAfterImage = (image: Omit<BeforeAfterImage, "id" | "uploadDate">) => {
-    const newImage: BeforeAfterImage = {
-      ...image,
-      id: Date.now().toString(),
-      uploadDate: new Date().toISOString().split("T")[0],
-    }
-    setBeforeAfterImages((prev) => [...prev, newImage])
+    db.addBeforeAfterImage(image)
+    refreshData()
   }
 
   const updateBeforeAfterImage = (id: string, updatedImage: Partial<BeforeAfterImage>) => {
-    setBeforeAfterImages((prev) => prev.map((image) => (image.id === id ? { ...image, ...updatedImage } : image)))
+    db.updateBeforeAfterImage(id, updatedImage)
+    refreshData()
   }
 
   const deleteBeforeAfterImage = (id: string) => {
-    setBeforeAfterImages((prev) => prev.filter((image) => image.id !== id))
+    db.deleteBeforeAfterImage(id)
+    refreshData()
   }
 
   const toggleImagePublished = (id: string) => {
-    setBeforeAfterImages((prev) =>
-      prev.map((image) => (image.id === id ? { ...image, isPublished: !image.isPublished } : image)),
-    )
+    const image = beforeAfterImages.find((img) => img.id === id)
+    if (image) {
+      updateBeforeAfterImage(id, { isPublished: !image.isPublished })
+    }
   }
 
   // Service Price Management Functions
   const addServicePrice = (price: Omit<ServicePrice, "id">) => {
-    const newPrice: ServicePrice = {
-      ...price,
-      id: Date.now().toString(),
-    }
-    setServicePrices((prev) => [...prev, newPrice])
+    db.addServicePrice(price)
+    refreshData()
   }
 
   const updateServicePrice = (id: string, updatedPrice: Partial<ServicePrice>) => {
-    setServicePrices((prev) => prev.map((price) => (price.id === id ? { ...price, ...updatedPrice } : price)))
+    db.updateServicePrice(id, updatedPrice)
+    refreshData()
   }
 
   const deleteServicePrice = (id: string) => {
-    setServicePrices((prev) => prev.filter((price) => price.id !== id))
+    db.deleteServicePrice(id)
+    refreshData()
   }
 
   const calculatePrice = (serviceId: string, size: string, frequency: string, addOns: string[]): number => {
@@ -425,6 +207,12 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
     const totalPrice = basePrice * sizeMultiplier * frequencyDiscount + addOnTotal
     return Math.round(totalPrice)
+  }
+
+  // Site Settings Functions
+  const updateSiteSettings = (settings: Partial<SiteSettings>) => {
+    const updated = db.updateSiteSettings(settings)
+    setSiteSettings(updated)
   }
 
   // Stats Function
@@ -486,6 +274,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     updateServicePrice,
     deleteServicePrice,
     calculatePrice,
+    siteSettings,
+    updateSiteSettings,
+    refreshData,
     getStats,
   }
 

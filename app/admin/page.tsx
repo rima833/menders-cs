@@ -3,7 +3,7 @@
 import { AuthProvider, useAuth, LoginForm } from "@/components/admin/admin-auth"
 import { AdminDashboard } from "@/components/admin/admin-dashboard"
 
-function AdminContent() {
+function AdminPageContent() {
   const { isAuthenticated } = useAuth()
 
   if (!isAuthenticated) {
@@ -16,7 +16,7 @@ function AdminContent() {
 export default function AdminPage() {
   return (
     <AuthProvider>
-      <AdminContent />
+      <AdminPageContent />
     </AuthProvider>
   )
 }
