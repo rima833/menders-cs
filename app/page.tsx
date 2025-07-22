@@ -1,31 +1,41 @@
-import { Header } from "@/components/header"
-import { Hero } from "@/components/hero"
-import { Services } from "@/components/services"
-import { WhyMenders } from "@/components/why-menders"
-import { PricingCalculator } from "@/components/pricing-calculator"
-import { BeforeAfterGallery } from "@/components/before-after-gallery"
-import { Testimonials } from "@/components/testimonials"
-import { Partnership } from "@/components/partnership"
-import { Contact } from "@/components/contact"
-import { Footer } from "@/components/footer"
-import { FreeClean } from "@/components/free-clean"
+'use client';
+
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from './store/store';
+import { fetchFeaturedProducts } from './features/products/productsSlice';
+import { getCurrentUser } from './features/auth/authSlice';
+import Header from './components/layout/Header';
+import Hero from './components/home/Hero';
+import FeaturedProducts from './components/home/FeaturedProducts';
+import Categories from './components/home/Categories';
+import WhyChooseUs from './components/home/WhyChooseUs';
+import Footer from './components/layout/Footer';
 
 export default function Home() {
+  const dispatch = useDispatch<AppDispatch>();
+  const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
+
+  useEffect(() => {
+    // Get current user if token exists
+    if (token && !isAuthenticated) {
+      dispatch(getCurrentUser());
+    }
+
+    // Fetch featured products
+    dispatch(fetchFeaturedProducts());
+  }, [dispatch, token, isAuthenticated]);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
       <main>
         <Hero />
-        <Services />
-        <WhyMenders />
-        <PricingCalculator />
-        <BeforeAfterGallery />
-        <Testimonials />
-        <FreeClean />
-        <Partnership />
-        <Contact />
+        <Categories />
+        <FeaturedProducts />
+        <WhyChooseUs />
       </main>
       <Footer />
     </div>
-  )
+  );
 }

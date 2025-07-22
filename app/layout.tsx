@@ -1,37 +1,37 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { FormProvider } from "@/components/form-provider"
-import { Toaster } from "@/components/ui/sonner"
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import StoreProvider from "./providers/StoreProvider";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Menders Cleaning Services - Professional Cleaning in Nigeria",
-  description:
-    "Professional cleaning services in Lagos, Abuja, and across Nigeria. Residential, commercial, and specialized cleaning solutions.",
-  keywords:
-    "cleaning services, Nigeria, Lagos, Abuja, professional cleaning, residential cleaning, commercial cleaning",
-    generator: 'v0.dev'
-}
+  title: "StyleMart - Nigeria's Premier Multi-Vendor Marketplace",
+  description: "Discover amazing products from verified vendors across Nigeria. Shop fashion, electronics, beauty products and more with secure payments.",
+  keywords: "marketplace, Nigeria, ecommerce, multi-vendor, fashion, electronics, shopping",
+  authors: [{ name: "StyleMart Team" }],
+  openGraph: {
+    title: "StyleMart - Nigeria's Premier Multi-Vendor Marketplace",
+    description: "Discover amazing products from verified vendors across Nigeria",
+    type: "website",
+    locale: "en_NG",
+  },
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <FormProvider>
+        <StoreProvider>
+          <div className="min-h-screen bg-gray-50">
             {children}
-            <Toaster />
-          </FormProvider>
-        </ThemeProvider>
+          </div>
+        </StoreProvider>
       </body>
     </html>
-  )
+  );
 }
