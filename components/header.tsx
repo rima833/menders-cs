@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Menu, Phone, MapPin, Clock, Star } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useForm } from "@/components/form-provider"
+import { NotificationCenter } from "@/components/notification-center"
 
 const navigation = [
   { name: "Home", href: "#home" },
@@ -99,6 +100,7 @@ export function Header() {
               <Button size="sm" onClick={() => openModal("book")} className="bg-blue-600 hover:bg-blue-700">
                 Book Now
               </Button>
+              <NotificationCenter />
               <ThemeToggle />
             </div>
 

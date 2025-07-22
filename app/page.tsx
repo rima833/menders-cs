@@ -9,6 +9,8 @@ import { Partnership } from "@/components/partnership"
 import { Contact } from "@/components/contact"
 import { Footer } from "@/components/footer"
 import { FreeClean } from "@/components/free-clean"
+import { LiveChat } from "@/components/live-chat"
+import { InlineNotification } from "@/components/notification-center"
 
 export default function Home() {
   return (
@@ -26,6 +28,8 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
+      <LiveChat />
+      <InlineNotification />
     </div>
   )
 }
